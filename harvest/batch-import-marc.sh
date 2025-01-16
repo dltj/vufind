@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -xe 
+
 # Make sure VUFIND_HOME is set:
 if [ -z "$VUFIND_HOME" ]
 then
@@ -127,13 +129,13 @@ else
     local LOGFILE
     if [ $# -eq 1 ]
     then
-      LOGFILE=$BASEPATH/log/`basename $1`.log
-      > $LOGFILE
+      LOGFILE=$BASEPATH/log/`basename "$1"`.log
+      > "$LOGFILE"
     else
-      LOGFILE=$BASEPATH/log/`basename $1`_and_more.log
+      LOGFILE=$BASEPATH/log/`basename "$1"`_and_more.log
       echo -e "This log is for the following files: \n$FILES\n" > $LOGFILE
     fi
-    cat -u - >> $LOGFILE
+    cat -u - >> "$LOGFILE"
   }
 fi
 
@@ -143,12 +145,14 @@ find -L $BASEPATH -maxdepth 1 \( -iname "*.xml" -o -iname "*.mrc" -o -iname "*.m
 do
   # Logging output handled by log() function
   # PROPERTIES_FILE passed via environment
-  $VUFIND_HOME/import-marc.sh $files 2> >(log $files)
-  if [ "$?" -eq "0" ] && [ $MOVE_DATA == true ]
-  then
-    for file in $files
-    do
-      mv $file $BASEPATH/processed/`basename $file`
-    done
-  fi
+    $VUFIND_HOME/import-marc.sh "$files" 2> >(log "$files")
+    
+    if [ "$?" -eq 0 ] && [ "$MOVE_DATA" == true ]; then
+      # Convert the space-separated file string into an array
+      IFS= read -r -a file_array <<< "$files"
+      
+      for file in "${file_array[@]}"; do
+        mv "$file" "$BASEPATH/processed/$(basename "$file")"
+      done
+    fi
 done
