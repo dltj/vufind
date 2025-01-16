@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -xe 
-
 # Make sure VUFIND_HOME is set:
 if [ -z "$VUFIND_HOME" ]
 then
