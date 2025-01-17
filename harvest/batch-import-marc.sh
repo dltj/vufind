@@ -138,19 +138,21 @@ else
 fi
 
 # Process all the files in the target directory:
-find -L $BASEPATH -maxdepth 1 \( -iname "*.xml" -o -iname "*.mrc" -o -iname "*.marc" \) -type f -print0 | sort -z | xargs -0 -r -n $MAX_BATCH_COUNT | \
-  while read -d $'\n' files
+find -L $BASEPATH -maxdepth 1 \( -iname "*.xml" -o -iname "*.mrc" -o -iname "*.marc" \) -type f -print0 \
+  | sort -z \
+  | xargs -0 -r -n $MAX_BATCH_COUNT \
+  | while read -d $'\n' files
 do
   # Logging output handled by log() function
   # PROPERTIES_FILE passed via environment
-    $VUFIND_HOME/import-marc.sh "$files" 2> >(log "$files")
+  $VUFIND_HOME/import-marc.sh "$files" 2> >(log "$files")
+  
+  if [ "$?" -eq 0 ] && [ "$MOVE_DATA" == true ]; then
+    # Convert the space-separated file string into an array
+    IFS= read -r -a file_array <<< "$files"
     
-    if [ "$?" -eq 0 ] && [ "$MOVE_DATA" == true ]; then
-      # Convert the space-separated file string into an array
-      IFS= read -r -a file_array <<< "$files"
-      
-      for file in "${file_array[@]}"; do
-        mv "$file" "$BASEPATH/processed/$(basename "$file")"
-      done
-    fi
+    for file in "${file_array[@]}"; do
+      mv "$file" "$BASEPATH/processed/$(basename "$file")"
+    done
+  fi
 done
